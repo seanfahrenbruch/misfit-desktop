@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Notification, ipcMain, shell, Menu, net, nativeImage } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const updater = require("./updater");
 
 const LOG = path.join(app.getPath("userData"), "desktop.log");
 function log(...parts) {
@@ -102,9 +103,11 @@ if (!gotLock) {
           submenu: [{ role: "reload" }, { role: "forceReload" }, { type: "separator" }, { role: "resetZoom" }, { role: "zoomIn" }, { role: "zoomOut" }, { role: "togglefullscreen" }],
         },
         { role: "windowMenu" },
+        { label: "Help", submenu: [{ label: "Check for Updates…", click: () => updater.check({ manual: true, win }) }] },
       ]),
     );
     createWindow();
+    updater.init({ logger: log, getWindow: () => win });
     // First launch only: sending one notification makes macOS show its
     // "Allow notifications?" prompt and lists the app in System Settings.
     const firstRun = path.join(app.getPath("userData"), ".notified");
