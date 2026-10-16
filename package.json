@@ -1,0 +1,15 @@
+{
+  "name": "misfit-desktop",
+  "version": "1.0.0",
+  "description": "Misfit Creatives desktop app",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . \"Misfit Creatives\" --platform=darwin --arch=arm64 --icon=icon --app-bundle-id=site.misfitcreatives.desktop --out=.dist --overwrite --prune=true"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^44.8.0"
+  }
+}
