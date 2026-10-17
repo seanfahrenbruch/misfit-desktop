@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "build": "electron-packager . \"Misfit Creatives\" --platform=darwin --arch=arm64 --icon=icon --app-bundle-id=site.misfitcreatives.desktop --out=.dist --overwrite --prune=true --ignore=\"^/\\.?dist\""
+    "build": "electron-packager . \"Misfit Creatives\" --platform=darwin --arch=arm64 --icon=icon --app-bundle-id=site.misfitcreatives.desktop --out=.dist --overwrite --prune=true --ignore=\"^/\\.?dist\"",
+    "dmg": "dmgbuild -s dmg-settings.py \"Misfit Creatives\" .dist/Misfit-Creatives-mac.dmg"
   },
   "devDependencies": {
     "@electron/packager": "^20.3.0",
