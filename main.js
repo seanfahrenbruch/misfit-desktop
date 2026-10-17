@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Notification, ipcMain, shell, Menu, net, nativeImage } = require("electron");
+const { app, BrowserWindow, Notification, ipcMain, shell, Menu, Tray, net, nativeImage } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const updater = require("./updater");
@@ -123,6 +123,32 @@ if (!gotLock) {
         fs.writeFileSync(firstRun, "1");
       } catch {}
     }
+  });
+
+  // Dock badge + menu-bar icon: unread count and the latest unread items.
+  let tray = null;
+  ipcMain.on("unread", (_event, state) => {
+    const count = Math.max(0, Number(state && state.count) || 0);
+    const items = Array.isArray(state && state.items) ? state.items.slice(0, 8) : [];
+    if (process.platform === "darwin") app.dock.setBadge(count > 0 ? String(count) : "");
+    if (!tray) {
+      tray = new Tray(path.join(__dirname, "trayTemplate.png"));
+      tray.setToolTip("Misfit Creatives");
+    }
+    tray.setTitle(count > 0 ? ` ${count}` : "");
+    const clip = (t, n) => (String(t).length > n ? `${String(t).slice(0, n - 1)}…` : String(t));
+    tray.setContextMenu(
+      Menu.buildFromTemplate([
+        { label: count > 0 ? `${count} unread` : "You're all caught up", enabled: false },
+        ...(items.length ? [{ type: "separator" }] : []),
+        ...items.map((i) => ({ label: `${clip(i.title, 38)} — ${clip(i.body, 34)}`, click: () => showWindow("/inbox") })),
+        { type: "separator" },
+        { label: "Open Inbox", click: () => showWindow("/inbox") },
+        { label: "Open Misfit Creatives", click: () => showWindow() },
+        { type: "separator" },
+        { label: "Quit", role: "quit" },
+      ]),
+    );
   });
 
   // Right-hand notification image = the workspace icon the portal sends (if any).
