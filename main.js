@@ -33,8 +33,9 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      // Keep the page (and its Realtime connection) alive while the window is hidden.
-      backgroundThrottling: false,
+      // Let Chromium throttle the page while the window is hidden. Alerts still
+      // arrive: the Realtime socket stays open and the portal polls as a backup.
+      backgroundThrottling: true,
     },
   });
   win.loadURL(PORTAL);
