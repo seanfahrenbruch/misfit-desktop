@@ -10,7 +10,27 @@ function log(...parts) {
   } catch {}
 }
 
-const PORTAL = "https://portal.misfitcreatives.site";
+// Only an unpackaged dev run may point at another portal (a local test server).
+const PORTAL = !app.isPackaged && process.env.MISFIT_PORTAL ? process.env.MISFIT_PORTAL : "https://portal.misfitcreatives.site";
+const TRUSTED_ORIGINS = new Set([new URL(PORTAL).origin, "https://txzzuflocnjypdbcvjox.supabase.co"]);
+const OFFLINE_PAGE = path.join(__dirname, "offline.html");
+
+// Compared by origin, not by string prefix: "https://portal.misfitcreatives.site.evil.com" and
+// "https://portal.misfitcreatives.site@evil.com" both start with the portal address.
+function isTrustedUrl(url) {
+  try {
+    return TRUSTED_ORIGINS.has(new URL(url).origin);
+  } catch {
+    return false;
+  }
+}
+function isPortalUrl(url) {
+  try {
+    return new URL(url).origin === new URL(PORTAL).origin;
+  } catch {
+    return false;
+  }
+}
 const ICON = path.join(__dirname, "icon.png");
 
 let win = null;
@@ -39,7 +59,21 @@ function createWindow() {
     },
   });
   win.loadURL(PORTAL);
-  win.webContents.on("console-message", (_e, _level, message) => {
+  // No connection (or the portal is down): show a friendly page instead of a blank blue window, and keep
+  // trying in the background so it recovers by itself.
+  let retryTimer = null;
+  win.webContents.on("did-fail-load", (_e, code, description, _url, isMainFrame) => {
+    if (!isMainFrame || code === -3) return; // -3 = a navigation that was cancelled on purpose
+    log("load failed:", String(code), description);
+    win.loadFile(OFFLINE_PAGE, { query: { portal: PORTAL } });
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => {
+      if (win && !win.isDestroyed() && win.webContents.getURL().startsWith("file:")) win.loadURL(PORTAL);
+    }, 15000);
+  });
+  // Newer Electron passes one event object (with .message); older versions pass (event, level, message).
+  win.webContents.on("console-message", (e, _level, legacyMessage) => {
+    const message = typeof legacyMessage === "string" ? legacyMessage : e && e.message;
     if (typeof message === "string" && message.startsWith("[desktop-alerts]")) log(message);
   });
 
@@ -55,14 +89,16 @@ function createWindow() {
 
   // Links to other sites open in the normal browser; the portal stays in the app.
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith(PORTAL)) return { action: "allow" };
+    if (isPortalUrl(url)) return { action: "allow" };
     shell.openExternal(url);
     return { action: "deny" };
   });
   win.webContents.on("will-navigate", (event, url) => {
-    if (!url.startsWith(PORTAL) && !url.startsWith("https://txzzuflocnjypdbcvjox.supabase.co")) {
+    // The offline page (a local file) sends people back to the portal.
+    if (url.startsWith("file:")) return;
+    if (!isTrustedUrl(url)) {
       event.preventDefault();
-      shell.openExternal(url);
+      if (/^https?:/i.test(url)) shell.openExternal(url);
     }
   });
 
@@ -79,7 +115,10 @@ function showWindow(url) {
   if (!win) createWindow();
   win.show();
   win.focus();
-  if (url) win.loadURL(new URL(url, PORTAL).href);
+  if (url) {
+    const target = new URL(url, PORTAL).href;
+    if (isPortalUrl(target)) win.loadURL(target);
+  }
 }
 
 const gotLock = app.requestSingleInstanceLock();

@@ -62,7 +62,9 @@ function spawnInstaller(relaunch) {
   if (!staged || installing) return;
   installing = true;
   const target = installedBundle();
-  const script = `while kill -0 ${process.pid} 2>/dev/null; do sleep 0.5; done; rm -rf "$TARGET" && mv "$SRC" "$TARGET" && ${
+  // Keep the old app until the new one is in place: if anything fails, the old one is put back, so a failed
+  // update can never leave the person with no app at all.
+  const script = `while kill -0 ${process.pid} 2>/dev/null; do sleep 0.5; done; BAK="$TARGET.old"; rm -rf "$BAK"; if mv "$TARGET" "$BAK"; then if mv "$SRC" "$TARGET"; then rm -rf "$BAK"; else rm -rf "$TARGET"; mv "$BAK" "$TARGET"; fi; fi; ${
     relaunch ? 'open "$TARGET"' : "true"
   }`;
   spawn("/bin/sh", ["-c", script], {

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Misfit Creatives</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; align-items: center; justify-content: center; background: #0042ff; color: #fff;
+         font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; -webkit-app-region: drag; text-align: center; }
+  main { max-width: 360px; padding: 24px; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  p { margin: 0 0 24px; opacity: .85; }
+  button { -webkit-app-region: no-drag; font: inherit; font-weight: 600; padding: 10px 22px; border: 0; border-radius: 10px;
+           background: #fff; color: #0042ff; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Can&rsquo;t reach Misfit Creatives</h1>
+  <p>Check your internet connection. We&rsquo;ll keep trying and reconnect on our own.</p>
+  <button id="retry">Try again</button>
+</main>
+<script>
+  var portal = new URLSearchParams(location.search).get("portal");
+  document.getElementById("retry").onclick = function () { if (portal) location.href = portal; };
+  window.addEventListener("online", function () { if (portal) location.href = portal; });
+</script>
+</body>
+</html>
