@@ -1,6 +1,6 @@
 {
   "name": "misfit-desktop",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Misfit Creatives desktop app",
   "main": "main.js",
   "private": true,
