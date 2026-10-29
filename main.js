@@ -45,10 +45,10 @@ function createWindow() {
     title: "Misfit Creatives",
     icon: ICON,
     backgroundColor: "#0042ff",
-    // No native title bar: a thin liquid-glass blue bar runs along the top (drawn below) and holds the
+    // No native title bar: a thin, subtle liquid-glass blue bar runs along the top (drawn below) and holds the
     // close / minimise / zoom buttons.
     titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 12, y: 10 },
+    trafficLightPosition: { x: 12, y: 9 },
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -77,7 +77,7 @@ function createWindow() {
     if (typeof message === "string" && message.startsWith("[desktop-alerts]")) log(message);
   });
 
-  // Desktop-only tweaks injected here so the shared web portal stays untouched: a thin liquid-glass blue bar along the
+  // Desktop-only tweaks injected here so the shared web portal stays untouched: a thin plain brand-blue bar along the
   // top (the whole bar drags the window and houses the close / minimise / zoom buttons), with the sidebar and page
   // starting below it so nothing sits under the bar.
   win.webContents.on("did-finish-load", () => {
@@ -85,11 +85,9 @@ function createWindow() {
       body::before {
         content: ""; position: fixed; top: 0; left: 0; right: 0; height: 32px; z-index: 40;
         -webkit-app-region: drag;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.35);
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 55%),
-          linear-gradient(180deg, #3d77ff 0%, #0042ff 100%);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), inset 0 -3px 6px rgba(0, 20, 120, 0.25), 0 4px 14px -6px rgba(0, 66, 255, 0.6);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+        background: linear-gradient(180deg, #2a62ff 0%, #0042ff 100%);
+        box-shadow: inset 0 -2px 4px rgba(0, 20, 120, 0.18);
       }
       [data-app-sidebar] { padding-top: 44px !important; }
       [data-app-content] { padding-top: 32px; }
