@@ -48,7 +48,7 @@ function createWindow() {
     // No native title bar: a thin, subtle liquid-glass blue bar runs along the top (drawn below) and holds the
     // close / minimise / zoom buttons.
     titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 12, y: 9 },
+    trafficLightPosition: { x: 12, y: 15 },
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -83,14 +83,14 @@ function createWindow() {
   win.webContents.on("did-finish-load", () => {
     win.webContents.insertCSS(`
       body::before {
-        content: ""; position: fixed; top: 0; left: 0; right: 0; height: 32px; z-index: 40;
+        content: ""; position: fixed; top: 0; left: 0; right: 0; height: 44px; z-index: 40;
         -webkit-app-region: drag;
         border-bottom: 1px solid rgba(255, 255, 255, 0.16);
         background: linear-gradient(180deg, #2a62ff 0%, #0042ff 100%);
         box-shadow: inset 0 -2px 4px rgba(0, 20, 120, 0.18);
       }
-      [data-app-sidebar] { padding-top: 44px !important; }
-      [data-app-content] { padding-top: 32px; }
+      [data-app-sidebar] { padding-top: 56px !important; }
+      [data-app-content] { padding-top: 44px; }
     `);
   });
 
