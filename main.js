@@ -45,10 +45,10 @@ function createWindow() {
     title: "Misfit Creatives",
     icon: ICON,
     backgroundColor: "#0042ff",
-    // No native title bar: the portal's blue header runs to the top edge and the
-    // traffic-light buttons sit on top of it.
+    // No native title bar: the portal's sidebar and page run to the top edge and the
+    // traffic-light buttons sit on top of them.
     titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 16, y: 24 },
+    trafficLightPosition: { x: 18, y: 16 },
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -77,13 +77,15 @@ function createWindow() {
     if (typeof message === "string" && message.startsWith("[desktop-alerts]")) log(message);
   });
 
-  // Desktop-only tweaks injected here so the shared web portal stays untouched:
-  // leave room for the window buttons, and make the header drag the window.
+  // Desktop-only tweaks injected here so the shared web portal stays untouched: a 28px strip along the
+  // top drags the window, and the sidebar and page start below it so nothing sits under the window buttons.
   win.webContents.on("did-finish-load", () => {
     win.webContents.insertCSS(`
-      header[class*="0042ff"] { padding-left: 88px !important; -webkit-app-region: drag; }
-      header[class*="0042ff"] a, header[class*="0042ff"] button, header[class*="0042ff"] input { -webkit-app-region: no-drag; }
-      body:not(:has(header))::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 28px; -webkit-app-region: drag; z-index: 40; }
+      body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 28px; -webkit-app-region: drag; z-index: 40; }
+      [data-app-sidebar] { padding-top: 40px !important; }
+      [data-app-content] { padding-top: 28px; }
+      [data-app-sidebar] .sb-logo-row { -webkit-app-region: drag; }
+      [data-app-sidebar] .sb-logo-row a, [data-app-sidebar] .sb-logo-row button { -webkit-app-region: no-drag; }
     `);
   });
 
