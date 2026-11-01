@@ -97,7 +97,8 @@ function createWindow() {
   // Links to other sites open in the normal browser; the portal stays in the app.
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isPortalUrl(url)) return { action: "allow" };
-    shell.openExternal(url);
+    // Only web and mail links are handed to the system; any other kind of address (a file or app link) is dropped.
+    if (/^(https?:|mailto:)/i.test(url)) shell.openExternal(url);
     return { action: "deny" };
   });
   win.webContents.on("will-navigate", (event, url) => {
