@@ -7,10 +7,13 @@ const { execFile, spawn } = require("child_process");
 const { Readable } = require("stream");
 const { pipeline } = require("stream/promises");
 const fs = require("fs");
+const crypto = require("crypto");
 const os = require("os");
 const path = require("path");
 
-const FEED = process.env.MISFIT_UPDATE_FEED || "https://api.github.com/repos/seanfahrenbruch/misfit-desktop/releases/latest";
+const DEFAULT_FEED = "https://api.github.com/repos/seanfahrenbruch/misfit-desktop/releases/latest";
+// The installed app only ever reads this project's own releases; a different feed can be set only when running from source.
+const FEED = !app.isPackaged && process.env.MISFIT_UPDATE_FEED ? process.env.MISFIT_UPDATE_FEED : DEFAULT_FEED;
 const ASSET = "Misfit-Creatives-mac.zip";
 const CHECK_EVERY_MS = 6 * 60 * 60 * 1000;
 
@@ -43,10 +46,19 @@ async function download(url, dest) {
   await pipeline(Readable.fromWeb(res.body), fs.createWriteStream(dest));
 }
 
-async function stage(version, url) {
+async function stage(version, url, digest) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "misfit-update-"));
   const zip = path.join(dir, ASSET);
   await download(url, zip);
+  // The download must match the checksum GitHub recorded for the release file, so a damaged or swapped file is
+  // never installed.
+  const expected = /^sha256:([0-9a-f]{64})$/i.exec(String(digest || ""))?.[1]?.toLowerCase();
+  if (!expected) throw new Error("the release has no checksum to verify");
+  const actual = await new Promise((resolve, reject) => {
+    const hash = crypto.createHash("sha256");
+    fs.createReadStream(zip).on("data", (d) => hash.update(d)).on("end", () => resolve(hash.digest("hex"))).on("error", reject);
+  });
+  if (actual !== expected) throw new Error("the downloaded update didn't match its checksum");
   await run("ditto", ["-x", "-k", zip, dir]);
   fs.rmSync(zip, { force: true });
   const appName = fs.readdirSync(dir).find((n) => n.endsWith(".app"));
@@ -92,7 +104,7 @@ async function check({ manual = false, win = null } = {}) {
       const target = installedBundle();
       fs.accessSync(path.dirname(target), fs.constants.W_OK);
       log("update: downloading", release.tag_name);
-      await stage(release.tag_name.replace(/^v/, ""), asset.browser_download_url);
+      await stage(release.tag_name.replace(/^v/, ""), asset.browser_download_url, asset.digest);
       log("update: staged", staged.version);
     }
     if (process.env.MISFIT_UPDATE_AUTO) {
