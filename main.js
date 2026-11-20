@@ -44,11 +44,10 @@ function createWindow() {
     minHeight: 600,
     title: "Misfit Creatives",
     icon: ICON,
-    backgroundColor: "#0042ff",
-    // No native title bar: a thin, subtle liquid-glass blue bar runs along the top (drawn below) and holds the
-    // close / minimise / zoom buttons.
+    backgroundColor: "#f5f5f7",
+    // No title bar and no bar of any kind: the close / minimise / zoom buttons sit inside the glass sidebar.
     titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 16, y: 15 },
+    trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -77,20 +76,11 @@ function createWindow() {
     if (typeof message === "string" && message.startsWith("[desktop-alerts]")) log(message);
   });
 
-  // Desktop-only tweaks injected here so the shared web portal stays untouched: a thin plain brand-blue bar along the
-  // top (the whole bar drags the window and houses the close / minimise / zoom buttons), with the sidebar and page
-  // starting below it so nothing sits under the bar.
+  // The sidebar's top makes room for the window buttons, and an invisible strip along the top lets the window be dragged.
   win.webContents.on("did-finish-load", () => {
     win.webContents.insertCSS(`
-      body::before {
-        content: ""; position: fixed; top: 0; left: 0; right: 0; height: 44px; z-index: 40;
-        -webkit-app-region: drag;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.16);
-        background: linear-gradient(180deg, #2a62ff 0%, #0042ff 100%);
-        box-shadow: inset 0 -2px 4px rgba(0, 20, 120, 0.18);
-      }
-      [data-app-sidebar] { padding-top: 56px !important; }
-      [data-app-content] { padding-top: 44px; }
+      html::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 14px; z-index: 40; -webkit-app-region: drag; background: none; }
+      [data-app-sidebar] { padding-top: 46px !important; }
     `);
   });
 
