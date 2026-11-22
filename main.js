@@ -47,7 +47,7 @@ function createWindow() {
     backgroundColor: "#f5f5f7",
     // No title bar and no bar of any kind: the close / minimise / zoom buttons sit inside the glass sidebar.
     titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 20, y: 20 },
+    trafficLightPosition: { x: 18, y: 16 },
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -80,7 +80,7 @@ function createWindow() {
   win.webContents.on("did-finish-load", () => {
     win.webContents.insertCSS(`
       html::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 14px; z-index: 40; -webkit-app-region: drag; background: none; }
-      [data-app-sidebar] { padding-top: 46px !important; }
+      [data-app-sidebar] { padding-top: 34px !important; }
     `);
   });
 
