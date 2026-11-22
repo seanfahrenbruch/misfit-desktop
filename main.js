@@ -85,16 +85,22 @@ function createWindow() {
     html[data-md-full] { clip-path: none; }
     html::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 14px; z-index: 40; -webkit-app-region: drag; background: none; }
     [data-app-sidebar] { padding-top: 34px !important; }
-    #md-lights { position: fixed; left: 18px; top: 16px; z-index: 100; display: flex; gap: 8px; -webkit-app-region: no-drag; }
+    #md-lights { position: fixed; left: 16px; top: 15px; z-index: 100; display: flex; gap: 7px; -webkit-app-region: no-drag; }
     html[data-md-full] #md-lights { display: none; }
-    #md-lights button { all: unset; box-sizing: border-box; width: 12px; height: 12px; border-radius: 50%; position: relative; cursor: default;
-      box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.18); }
-    #md-lights button::after { content: ""; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      font: 700 9px/12px -apple-system, system-ui, sans-serif; color: rgba(0,0,0,0.55); text-align: center; opacity: 0; }
+    #md-lights button { all: unset; box-sizing: border-box; width: 14px; height: 14px; border-radius: 50%; position: relative; cursor: default;
+      box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.2); }
+    /* A larger invisible hit area around each dot (about 20px), so they are easy to hit. */
+    #md-lights button::before { content: ""; position: absolute; inset: -3px; border-radius: 50%; }
+    /* The symbols are drawn as images centred in the dot, so they are exactly in the middle. */
+    #md-lights button::after { content: ""; position: absolute; inset: 0; background: center / 14px 14px no-repeat; opacity: 0; transition: opacity 80ms; }
     #md-lights:hover button::after { opacity: 1; }
-    #md-lights [data-a="close"] { background: #ff5f57; } #md-lights [data-a="close"]::after { content: "\\00d7"; font-size: 11px; }
-    #md-lights [data-a="minimize"] { background: #febc2e; } #md-lights [data-a="minimize"]::after { content: "\\2212"; }
-    #md-lights [data-a="zoom"] { background: #28c840; } #md-lights [data-a="zoom"]::after { content: "+"; }
+    #md-lights button:focus-visible { outline: 2px solid rgba(0,66,255,0.8); outline-offset: 2px; }
+    #md-lights [data-a="close"] { background: #ff5f57; }
+    #md-lights [data-a="close"]::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4.6 4.6l4.8 4.8M9.4 4.6l-4.8 4.8' stroke='%234d0000' stroke-width='1.4' stroke-linecap='round' fill='none'/%3E%3C/svg%3E"); }
+    #md-lights [data-a="minimize"] { background: #febc2e; }
+    #md-lights [data-a="minimize"]::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4 7h6' stroke='%23995700' stroke-width='1.4' stroke-linecap='round' fill='none'/%3E%3C/svg%3E"); }
+    #md-lights [data-a="zoom"] { background: #28c840; }
+    #md-lights [data-a="zoom"]::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4 7h6M7 4v6' stroke='%23006500' stroke-width='1.4' stroke-linecap='round' fill='none'/%3E%3C/svg%3E"); }
     html[data-md-blur] #md-lights button { background: rgba(120,120,128,0.45); }
   `;
   const WINDOW_JS = `(() => {
