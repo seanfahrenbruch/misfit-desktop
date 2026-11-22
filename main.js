@@ -44,10 +44,12 @@ function createWindow() {
     minHeight: 600,
     title: "Misfit Creatives",
     icon: ICON,
-    backgroundColor: "#f5f5f7",
-    // No title bar and no bar of any kind: the close / minimise / zoom buttons sit inside the glass sidebar.
-    titleBarStyle: "hiddenInset",
-    trafficLightPosition: { x: 18, y: 16 },
+    // A frameless, see-through window: the page draws its own big rounded corners (macOS only allows its fixed corner radius
+    // on a normal window), and the close / minimise / zoom buttons are drawn inside the glass sidebar (see below).
+    frame: false,
+    transparent: true,
+    backgroundColor: "#00000000",
+    hasShadow: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -76,13 +78,45 @@ function createWindow() {
     if (typeof message === "string" && message.startsWith("[desktop-alerts]")) log(message);
   });
 
-  // The sidebar's top makes room for the window buttons, and an invisible strip along the top lets the window be dragged.
+  // Desktop-only look, injected here so the shared web portal stays untouched: big rounded window corners, an invisible
+  // strip along the top for dragging the window, room at the top of the sidebar for the window buttons, and the buttons.
+  const WINDOW_CSS = `
+    html { background: transparent !important; clip-path: inset(0 round 28px); }
+    html[data-md-full] { clip-path: none; }
+    html::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 14px; z-index: 40; -webkit-app-region: drag; background: none; }
+    [data-app-sidebar] { padding-top: 34px !important; }
+    #md-lights { position: fixed; left: 18px; top: 16px; z-index: 100; display: flex; gap: 8px; -webkit-app-region: no-drag; }
+    html[data-md-full] #md-lights { display: none; }
+    #md-lights button { all: unset; box-sizing: border-box; width: 12px; height: 12px; border-radius: 50%; position: relative; cursor: default;
+      box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.18); }
+    #md-lights button::after { content: ""; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      font: 700 9px/12px -apple-system, system-ui, sans-serif; color: rgba(0,0,0,0.55); text-align: center; opacity: 0; }
+    #md-lights:hover button::after { opacity: 1; }
+    #md-lights [data-a="close"] { background: #ff5f57; } #md-lights [data-a="close"]::after { content: "\\00d7"; font-size: 11px; }
+    #md-lights [data-a="minimize"] { background: #febc2e; } #md-lights [data-a="minimize"]::after { content: "\\2212"; }
+    #md-lights [data-a="zoom"] { background: #28c840; } #md-lights [data-a="zoom"]::after { content: "+"; }
+    html[data-md-blur] #md-lights button { background: rgba(120,120,128,0.45); }
+  `;
+  const WINDOW_JS = `(() => {
+    if (!window.misfitDesktop || !window.misfitDesktop.windowControl || document.getElementById("md-lights")) return;
+    const box = document.createElement("div");
+    box.id = "md-lights";
+    box.innerHTML = '<button data-a="close" aria-label="Close"></button><button data-a="minimize" aria-label="Minimise"></button><button data-a="zoom" aria-label="Zoom"></button>';
+    box.addEventListener("click", (e) => { const a = e.target.closest("button")?.dataset.a; if (a) window.misfitDesktop.windowControl(a); });
+    document.body.appendChild(box);
+  })()`;
+  const setFlag = (name, on) =>
+    win.webContents.executeJavaScript(`document.documentElement.toggleAttribute(${JSON.stringify(name)}, ${on})`).catch(() => {});
   win.webContents.on("did-finish-load", () => {
-    win.webContents.insertCSS(`
-      html::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 14px; z-index: 40; -webkit-app-region: drag; background: none; }
-      [data-app-sidebar] { padding-top: 34px !important; }
-    `);
+    win.webContents.insertCSS(WINDOW_CSS);
+    win.webContents.executeJavaScript(WINDOW_JS).catch(() => {});
+    setFlag("data-md-full", win.isFullScreen());
+    setFlag("data-md-blur", !win.isFocused());
   });
+  win.on("enter-full-screen", () => setFlag("data-md-full", true));
+  win.on("leave-full-screen", () => setFlag("data-md-full", false));
+  win.on("focus", () => setFlag("data-md-blur", false));
+  win.on("blur", () => setFlag("data-md-blur", true));
 
   // Links to other sites open in the normal browser; the portal stays in the app.
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -165,6 +199,15 @@ if (!gotLock) {
 
   // Dock badge + menu-bar icon: unread count and the latest unread items.
   let tray = null;
+  // The window buttons drawn in the page (the window has no native frame). Only our own pages may use them.
+  ipcMain.on("window-control", (event, action) => {
+    const w = BrowserWindow.fromWebContents(event.sender);
+    const url = (event.senderFrame && event.senderFrame.url) || "";
+    if (!w || !(isTrustedUrl(url) || url.startsWith("file:"))) return;
+    if (action === "close") w.close(); // hides the window; the app keeps running for alerts
+    else if (action === "minimize") w.minimize();
+    else if (action === "zoom") (w.isMaximized() ? w.unmaximize() : w.maximize());
+  });
   ipcMain.on("unread", (_event, state) => {
     const count = Math.max(0, Number(state && state.count) || 0);
     const items = Array.isArray(state && state.items) ? state.items.slice(0, 8) : [];

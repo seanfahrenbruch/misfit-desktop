@@ -4,4 +4,5 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("misfitDesktop", {
   notify: (alert) => ipcRenderer.send("notify", alert),
   setUnread: (state) => ipcRenderer.send("unread", state),
+  windowControl: (action) => ipcRenderer.send("window-control", action),
 });
