@@ -88,10 +88,10 @@ function createWindow() {
     html { background: transparent !important; background-image: linear-gradient(transparent, transparent) !important; clip-path: inset(0 round 28px); }
     body { isolation: isolate; }
     html[data-md-full] { clip-path: none; }
-    html::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 26px; z-index: 40; -webkit-app-region: drag; background: none; }
+    html::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 34px; z-index: -1; -webkit-app-region: drag; background: none; }
     /* A title strip above the whole app: the window buttons sit here, so they never overlay the sidebar. */
-    html:not([data-md-full]) body { padding-top: 26px; box-sizing: border-box; }
-    #md-lights { position: fixed; left: 18px; top: 10px; z-index: 100; display: flex; gap: 7px; -webkit-app-region: no-drag; }
+    html:not([data-md-full]) body { padding-top: 34px; box-sizing: border-box; }
+    #md-lights { position: fixed; left: 18px; top: 14px; z-index: 100; display: flex; gap: 7px; -webkit-app-region: no-drag; }
     html[data-md-full] #md-lights { display: none; }
     #md-lights button { all: unset; box-sizing: border-box; width: 14px; height: 14px; border-radius: 50%; position: relative; cursor: default;
       box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.2); }
