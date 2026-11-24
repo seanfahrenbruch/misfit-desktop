@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Notification, ipcMain, shell, Menu, Tray, net, nativeImage } = require("electron");
+const { app, BrowserWindow, Notification, dialog, ipcMain, shell, Menu, Tray, net, nativeImage } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const updater = require("./updater");
@@ -35,6 +35,7 @@ const ICON = path.join(__dirname, "icon.png");
 
 let win = null;
 let quitting = false;
+let warnedBlocked = false;
 
 function createWindow() {
   win = new BrowserWindow({
@@ -283,7 +284,24 @@ if (!gotLock) {
     const icon = await fetchIcon(alert.icon);
     const n = new Notification({ title: alert.title, body: String(alert.body || ""), ...(icon ? { icon } : {}) });
     n.on("show", () => log("notify shown", icon ? "(with workspace icon)" : "(no icon)"));
-    n.on("failed", (_e, err) => log("notify failed:", String(err)));
+    n.on("failed", (_e, err) => {
+      log("notify failed:", String(err));
+      // "UNErrorDomain error 1" = macOS has notifications switched off for this app. Say so once per launch, with a button that opens the
+      // right System Settings page, instead of failing silently (the alert reached the app; only the banner was blocked).
+      if (/UNErrorDomain/.test(String(err)) && !warnedBlocked) {
+        warnedBlocked = true;
+        dialog
+          .showMessageBox({
+            type: "info",
+            message: "macOS is blocking Misfit Creatives notifications",
+            detail: "Alerts (new mail, mentions, approvals) reach the app but can't be shown. Turn on Allow Notifications for Misfit Creatives in System Settings.",
+            buttons: ["Open Notification Settings", "Not now"],
+            defaultId: 0,
+          })
+          .then((r) => { if (r.response === 0) shell.openExternal("x-apple.systempreferences:com.apple.Notifications-Settings.extension"); })
+          .catch(() => {});
+      }
+    });
     n.on("click", () => showWindow(typeof alert.url === "string" ? alert.url : "/"));
     n.show();
   });
